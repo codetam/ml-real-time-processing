@@ -1,2 +1,2 @@
-# ml-image-processing
-Production grade containerized application to run image processing workloads.
+# ml-real-time-processing
+Production grade containerized application to run real time video workloads.
