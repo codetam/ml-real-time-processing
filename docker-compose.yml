@@ -14,7 +14,7 @@ services:
     # command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     command: tail -F anything 
     volumes:
-      - ./fastapi:/app
+      - ./fastapi:/project/app
     ports:
       - "8000:8000"
     environment:
