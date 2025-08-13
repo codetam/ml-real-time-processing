@@ -1,26 +1,26 @@
 services:
-  #redis:
-  #  image: redis:7-alpine
-  #  container_name: redis
-  #  ports:
-  #    - "6379:6379"
-  #  command: ["redis-server", "--appendonly", "no"]
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "no"]
 #
-  #fastapi:
-  #  build:
-  #    context: ./fastapi
-  #    dockerfile: Dockerfile
-  #  container_name: fastapi
-  #  # command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-  #  command: tail -F anything 
-  #  volumes:
-  #    - ./fastapi:/app
-  #  ports:
-  #    - "8000:8000"
-  #  environment:
-  #    - REDIS_URL=redis://redis:6379/0
-  #  depends_on:
-  #    - redis
+  fastapi:
+    build:
+      context: ./fastapi
+      dockerfile: Dockerfile
+    container_name: fastapi
+    # command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: tail -F anything 
+    volumes:
+      - ./fastapi:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
 #
   #inference_worker:
   #  build:
@@ -54,9 +54,9 @@ services:
       --http-port=8002
       --metrics-port=8003
     ports:
-      - "8001:8001"  # gRPC
-      - "8002:8002"  # HTTP
-      - "8003:8003"  # Metrics
+      - "8001:8001"
+      - "8002:8002"
+      - "8003:8003"
     volumes:
       - ./models:/models
     deploy:
