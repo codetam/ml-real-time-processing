@@ -1,0 +1,4 @@
+aioredis
+tritonclient[grpc]
+opencv-python-headless
+numpy

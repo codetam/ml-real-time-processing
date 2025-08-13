@@ -1,0 +1,89 @@
+services:
+  #redis:
+  #  image: redis:7-alpine
+  #  container_name: redis
+  #  ports:
+  #    - "6379:6379"
+  #  command: ["redis-server", "--appendonly", "no"]
+#
+  #fastapi:
+  #  build:
+  #    context: ./fastapi
+  #    dockerfile: Dockerfile
+  #  container_name: fastapi
+  #  # command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+  #  command: tail -F anything 
+  #  volumes:
+  #    - ./fastapi:/app
+  #  ports:
+  #    - "8000:8000"
+  #  environment:
+  #    - REDIS_URL=redis://redis:6379/0
+  #  depends_on:
+  #    - redis
+#
+  #inference_worker:
+  #  build:
+  #    context: ./inference_worker
+  #    dockerfile: Dockerfile
+  #  container_name: inference_worker
+  #  environment:
+  #    - REDIS_URL=redis://redis:6379/0
+  #    - TRITON_GRPC_URL=triton:8001
+  #    - NVIDIA_VISIBLE_DEVICES=0
+  #  volumes:
+  #    - ./inference_worker:/app
+  #  deploy:
+  #    resources:
+  #      reservations:
+  #        devices:
+  #        -  driver: nvidia
+  #           count: all
+  #           capabilities: [gpu]
+  #  depends_on:
+  #    - redis
+  #    - triton
+#
+  triton:
+    image: nvcr.io/nvidia/tritonserver:25.07-py3
+    container_name: triton
+    command: >
+      tritonserver
+      --model-repository=/models
+      --grpc-port=8001
+      --http-port=8002
+      --metrics-port=8003
+    ports:
+      - "8001:8001"  # gRPC
+      - "8002:8002"  # HTTP
+      - "8003:8003"  # Metrics
+    volumes:
+      - ./models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+          -  driver: nvidia
+             count: all
+             capabilities: [gpu]
+
+  pytorch-testing:
+    build:
+      context: ./pytorch-testing
+      dockerfile: Dockerfile
+    container_name: pytorch-testing
+    restart: always
+    volumes:
+      - ./pytorch-testing:/app
+      - ./models:/models
+    command: tail -F anything
+    deploy:
+      resources:
+        reservations:
+          devices:
+          -  driver: nvidia
+             count: all
+             capabilities: [gpu]
+
+volumes:
+  redis-data:
