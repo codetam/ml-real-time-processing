@@ -1,3 +1,4 @@
 *.pt
 *.onnx
 *.jpg
+.pnpm-store*

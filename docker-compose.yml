@@ -5,7 +5,7 @@ services:
     ports:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "no"]
-#
+
   fastapi:
     build:
       context: ./fastapi
@@ -22,28 +22,30 @@ services:
     depends_on:
       - redis
 #
-  #inference_worker:
-  #  build:
-  #    context: ./inference_worker
-  #    dockerfile: Dockerfile
-  #  container_name: inference_worker
-  #  environment:
-  #    - REDIS_URL=redis://redis:6379/0
-  #    - TRITON_GRPC_URL=triton:8001
-  #    - NVIDIA_VISIBLE_DEVICES=0
-  #  volumes:
-  #    - ./inference_worker:/app
-  #  deploy:
-  #    resources:
-  #      reservations:
-  #        devices:
-  #        -  driver: nvidia
-  #           count: all
-  #           capabilities: [gpu]
-  #  depends_on:
-  #    - redis
-  #    - triton
-#
+  inference_worker:
+    build:
+      context: ./inference_worker
+      dockerfile: Dockerfile
+    container_name: inference_worker
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - TRITON_GRPC_URL=triton:8001
+      - TRITON_HTTP_URL=triton:8002
+      - NVIDIA_VISIBLE_DEVICES=0
+    volumes:
+      - ./inference_worker:/project/app
+    command: sh -c "cd /project/app && python main.py"
+    deploy:
+      resources:
+        reservations:
+          devices:
+          -  driver: nvidia
+             count: all
+             capabilities: [gpu]
+    depends_on:
+      - redis
+      - triton
+
   triton:
     image: nvcr.io/nvidia/tritonserver:25.07-py3
     container_name: triton
@@ -67,23 +69,34 @@ services:
              count: all
              capabilities: [gpu]
 
-  pytorch-testing:
+#  pytorch-testing:
+#    build:
+#      context: ./pytorch-testing
+#      dockerfile: Dockerfile
+#    container_name: pytorch-testing
+#    restart: always
+#    volumes:
+#      - ./pytorch-testing:/app
+#      - ./models:/models
+#    command: tail -F anything
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#          -  driver: nvidia
+#             count: all
+#             capabilities: [gpu]
+
+  frontend-dev:
     build:
-      context: ./pytorch-testing
+      context: ./frontend/dev
       dockerfile: Dockerfile
-    container_name: pytorch-testing
-    restart: always
-    volumes:
-      - ./pytorch-testing:/app
-      - ./models:/models
+    container_name: frontend-dev
     command: tail -F anything
-    deploy:
-      resources:
-        reservations:
-          devices:
-          -  driver: nvidia
-             count: all
-             capabilities: [gpu]
+    ports:
+      - 3000:3000
+    volumes:
+      - ./frontend/dev:/project
 
 volumes:
   redis-data:
