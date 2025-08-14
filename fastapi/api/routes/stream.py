@@ -1,55 +1,34 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi import FastAPI, WebSocket
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+
+from app.core.redis import read_results, send_image_to_redis
 
 router = APIRouter(
     prefix="/stream",
     tags=["stream"],
 )
 
-html = """
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Chat</title>
-    </head>
-    <body>
-        <h1>WebSocket Chat</h1>
-        <form action="" onsubmit="sendMessage(event)">
-            <input type="text" id="messageText" autocomplete="off"/>
-            <button>Send</button>
-        </form>
-        <ul id='messages'>
-        </ul>
-        <script>
-            var ws = new WebSocket("ws://localhost:8000/stream/ws");
-            ws.onmessage = function(event) {
-                var messages = document.getElementById('messages')
-                var message = document.createElement('li')
-                var content = document.createTextNode(event.data)
-                message.appendChild(content)
-                messages.appendChild(message)
-            };
-            function sendMessage(event) {
-                var input = document.getElementById("messageText")
-                ws.send(input.value)
-                input.value = ''
-                event.preventDefault()
-            }
-        </script>
-    </body>
-</html>
-"""
-
-
-@router.get("/")
-async def get():
-    return HTMLResponse(html)
-
-
-@router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+@router.websocket("/ws/{session_id}")
+async def websocket_endpoint(session_id: str, websocket: WebSocket):
     await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-        await websocket.send_text(f"Message text was: {data}")
+    redis_client = websocket.app.state.redis
+    async for result in read_results(redis_client, session_id):
+        data = {
+            "session_id": result["session_id"],
+            "frame_id": result["frame_id"],
+            "timestamp": result["timestamp"],
+            "model_version": result["model_version"],
+            "processing_time_ms": result["processing_time_ms"],
+            "detections": result["detections"]
+        }
+        await websocket.send_json(data)
+        
+@router.post("/upload-image/{session_id}")
+async def upload_image(session_id: str, request: Request, image: UploadFile = File(...)):
+    try:
+        img_bytes = await image.read()
+        await send_image_to_redis(request.app.state.redis, img_bytes, session_id, frame_number=1)
+        return JSONResponse({"status": "ok", "filename": image.filename})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
