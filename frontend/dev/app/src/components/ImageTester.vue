@@ -1,115 +1,122 @@
 <template>
-  <v-container fluid class="px-8 py-12 text-text">
+  <v-container fluid class="pa-0 hero-container">
+    <v-spacer style="height: 8rem;"></v-spacer>
     <!-- Hero -->
-    <v-row align="center" justify="center" class="mb-4">
+    <v-row align="center" justify="center" class="mb-4 mt-10 z-top">
       <v-col cols="12" md="8" class="text-center">
-        <h2 class="text-h3 font-weight-bold mb-4">Image Model Tester</h2>
-        <p class="text-subtitle-1 opacity-75">
+        <p class="text-h2 font-weight-bold neon-text mb-4">Image Model Tester</p>
+        <p class="text-h5 opacity-75">
           Upload an image, choose an AI model, and preview beautiful detection results.
         </p>
       </v-col>
     </v-row>
 
+
+    <v-spacer style="height: 8rem;"></v-spacer>
+
     <!-- Glassmorphism Upload Card -->
-    <v-row justify="center">
-      <v-col cols="12" md="10">
+    <v-row justify="center" class="z-top">
+      <v-col cols="12" md="10" lg="10">
         <v-card variant="text" class="pa-6" elevation="0">
-          <v-row class="px-10">
-            <v-col cols="12" md="1"></v-col>
-            <v-col cols="12" md="4">
-              <v-file-input v-model="imageFile" label="Upload Image" prepend-icon="mdi-image" accept="image/*"
-                variant="outlined" density="comfortable" class="hover-scale"/>
+          <v-row align="center" justify="center" dense>
+            <v-col cols="12" md="5">
+              <div class="upload-image hover-scale">
+                <v-file-upload class="text-text" v-model="imageFile" title="Upload your image" accept="image/*"
+                  width="100%" density="compact"
+                  style="background: transparent !important; box-shadow: none !important;" />
+              </div>
             </v-col>
-
-            <v-col cols="12" md="4">
-              <v-select v-model="selectedModel" :items="models" label="Select Model" prepend-icon="mdi-robot"
-                variant="outlined" density="comfortable" class="hover-scale" />
-            </v-col>
-
-            <v-col cols="12" md="2" class="h-100">
-              <v-btn color="pink-darken-3" class="w-100 hover-scale" size="large" @click="processImage"
-                :disabled="!imageFile">
-                <v-progress-circular v-if="loading" indeterminate size="20" color="black" class="mr-2" />
-                {{ loading ? 'Processing...' : 'Process' }}
-              </v-btn>
+            <v-col md="1"></v-col>
+            <v-col cols="12" md="4" class="">
+              <v-row class="w-100">
+                <v-select v-model="selectedModel" :items="models" label="Select Model" prepend-icon="mdi-robot"
+                  variant="outlined" density="comfortable" class="hover-scale" />
+              </v-row>
+              <v-divider class="my-8"></v-divider>
+              <v-row class="w-100">
+                <v-btn class="modern-run-btn w-100" size="large" @click="processImage" :disabled="!imageFile">
+                  <v-progress-circular v-if="loading" indeterminate size="20" color="white" class="mr-2" />
+                  Run
+                </v-btn>
+              </v-row>
             </v-col>
             <v-col cols="12" md="1"></v-col>
           </v-row>
 
-          <v-divider class="my-6"></v-divider>
+          <v-spacer style="height: 8rem;"></v-spacer>
+          <v-divider class="my-1"></v-divider>
+          <v-spacer style="height: 8rem;"></v-spacer>
 
           <!-- Images -->
           <v-row style="min-height: 400px;">
             <v-col cols="12" md="6">
-              <v-card class="pa-4 h-100">
-                <v-card-title class="info black--text">
+              <v-card class="pa-4 h-100 preview-card hover-scale">
+                <v-card-title class="info text-text">
                   <v-icon left class="text-text">mdi-camera</v-icon>
                   Uploaded Image
                   <v-spacer></v-spacer>
                 </v-card-title>
-                <div v-if="imageFile" class="text-center py-8 d-flex justify-center">
+                <div v-if="imageFile" class="text-center py-6 d-flex justify-center">
                   <img :src="previewUrl" alt="Uploaded Preview" class="responsive-img rounded-lg" />
                 </div>
-                <div v-else class="text-center pb-8 h-100 d-flex flex-column justify-center align-center">
+                <div v-else class="placeholder">
                   <v-icon size="64" color="grey lighten-1">mdi-image-off</v-icon>
-                  <p class="text-subtitle-1 text-text mt-2">
+                  <p class="text-subtitle-1 mt-2">
                     Upload an image to display
                   </p>
                 </div>
               </v-card>
             </v-col>
             <v-col cols="12" md="6">
-              <v-card class="pa-4 h-100">
-                <v-card-title class="info black--text">
-                  <v-icon left class="text-text">mdi-camera</v-icon>
+              <v-card class="pa-4 h-100 preview-card hover-scale">
+                <v-card-title class="text-text">
+                  <v-icon left class="mr-2">mdi-camera</v-icon>
                   Proccessed Image
                   <v-spacer></v-spacer>
                 </v-card-title>
-                <div v-if="bboxProcessedUrl" class="text-center py-8 d-flex justify-center">
+                <div v-if="bboxProcessedUrl" class="text-center py-6 d-flex justify-center">
                   <img :src="bboxProcessedUrl" alt="Processed Preview" class="responsive-img rounded-lg" />
                 </div>
-                <div v-else class="text-center pb-8 h-100 d-flex flex-column justify-center align-center">
+                <div v-else class="placeholder">
                   <v-icon size="64" color="grey lighten-1">mdi-image-off</v-icon>
-                  <p class="text-subtitle-1 text-text mt-2">
-                    Click on Process to display
+                  <p class="text-subtitle-1 mt-2">
+                    Click Run AI to process
                   </p>
                 </div>
               </v-card>
             </v-col>
           </v-row>
 
-          <v-divider class="my-6"></v-divider>
+          <v-divider class="my-8"></v-divider>
 
           <!-- JSON -->
-          <v-row>
-            <v-card class="pa-4 glass-card">
-              <v-card-title class="info black--text">
-                <v-row>
-                  <v-col>
-                    <v-icon class="text-text">mdi-code-json</v-icon>
-                    Response
-                  </v-col>
-                  <v-col class="text-right">
-                    <v-btn size="x-small" v-if="jsonData" @click="copyJsonToClipboard" icon color="black"
-                      :title="copySuccess ? 'Copied!' : 'Copy to clipboard'">
-                      <v-icon>{{ copySuccess ? 'mdi-check' : 'mdi-content-copy' }}</v-icon>
-                    </v-btn>
-                  </v-col>
-                </v-row>
-              </v-card-title>
-              <v-card-text class="pa-0">
-                <div v-if="jsonData" class="json-container">
-                  <pre class="json-content pa-4"><code>{{ formattedJson }}</code></pre>
-                </div>
-                <div v-else class="text-center py-8 pa-4">
-                  <v-icon size="64" color="grey lighten-1">mdi-code-json</v-icon>
-                  <p class="text-subtitle-1 grey--text mt-2">
-                    No JSON data to display
-                  </p>
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-row>
+          <v-card class="pa-4 glass-card">
+            <v-card-title class="info text-text">
+              <v-row>
+                <v-col>
+                  <v-icon class="text-text">mdi-code-json</v-icon>
+                  Response
+                </v-col>
+                <v-col class="text-right">
+                  <v-btn size="x-small" v-if="jsonData" @click="copyJsonToClipboard" icon color="black"
+                    :title="copySuccess ? 'Copied!' : 'Copy to clipboard'">
+                    <v-icon>{{ copySuccess ? 'mdi-check' : 'mdi-content-copy' }}</v-icon>
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-card-title>
+            <v-card-text class="pa-0">
+              <div v-if="jsonData">
+                <pre class="json-content pa-4"><code v-html="formattedJson"></code></pre>
+              </div>
+              <div v-else class="placeholder py-6">
+                <v-icon size="64" color="grey lighten-1">mdi-code-json</v-icon>
+                <p class="text-subtitle-1 mt-2">
+                  No JSON data yet
+                </p>
+              </div>
+            </v-card-text>
+          </v-card>
         </v-card>
       </v-col>
     </v-row>
@@ -125,18 +132,12 @@ const loading = ref(false);
 
 import { computed } from "vue";
 
-const sessionId = "test-session-id"
+const sessionId = "test-id"
 
 // Image upload
 const maxSize = 5000000 // 5 MB
-const imageFile = ref<File | null>(null);
+const imageFile = ref<File | undefined>(undefined);
 const errorMessage = 'Total image size should be less than 5 MB!'
-const rules: ((value: File | null) => boolean | string)[] = [
-  (value) => {
-    if (!value) return true;
-    return value.size <= maxSize || errorMessage;
-  },
-];
 
 // JSON data
 const jsonData = ref<any>(null)
@@ -163,15 +164,37 @@ ws.onmessage = async (event) => {
   }
 };
 
-const formattedJson = computed(() => {
-  return jsonData.value ? JSON.stringify(jsonData.value, null, 2) : ''
-});
+function syntaxHighlight(json: string): string {
+  const esc = json
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+  return esc.replace(
+    /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(?:\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    (match: string) => {
+      let cls = 'json-number'
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'json-key' : 'json-string'
+      } else if (/true|false/.test(match)) {
+        cls = 'json-boolean'
+      } else if (/null/.test(match)) {
+        cls = 'json-null'
+      }
+      return `<span class="${cls}">${match}</span>`
+    }
+  )
+}
+
+const formattedJson = computed<string>(() =>
+  jsonData.value ? syntaxHighlight(JSON.stringify(jsonData.value, null, 2)) : ''
+)
 
 const previewUrl = computed(() =>
   imageFile.value ? URL.createObjectURL(imageFile.value) : undefined
 )
 
-watch( imageFile, () => {
+watch(imageFile, () => {
   bboxProcessedUrl.value = null;
 })
 
@@ -269,14 +292,28 @@ async function generateImageWithBBoxes(file: File, detections: Detection[]) {
 </script>
 
 <style scoped>
+.hero-container {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
 .glass-card {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  backdrop-filter: blur(10px);
+  background: rgba(20, 20, 30, 0.85);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(16px);
+  color: white;
+}
+.upload-image {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  color: white;
 }
 
 .hover-scale {
-  transition: transform 0.2s ease;
+  transition: transform 0.2s;
 }
 
 .hover-scale:hover {
@@ -293,6 +330,15 @@ async function generateImageWithBBoxes(file: File, detections: Detection[]) {
   border-radius: 12px;
   max-width: 100%;
   opacity: 0.8;
+}
+
+.placeholder {
+  height: 350px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #888;
 }
 
 .responsive-img {
@@ -316,5 +362,86 @@ async function generateImageWithBBoxes(file: File, detections: Detection[]) {
   left: 0;
   pointer-events: none;
   /* let clicks pass through */
+}
+
+.z-top {
+  position: relative;
+  z-index: 1;
+}
+
+.neon-text {
+  color: #F5F5F7;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.7);
+}
+
+.preview-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  transition: transform 0.3s ease;
+}
+
+.preview-card:hover {
+  transform: scale(1.02);
+}
+
+.json-content {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  padding: 1rem;
+}
+
+/* IMPORTANT: use :deep() so scoped CSS applies to v-html content */
+.json-content :deep(.json-key) {
+  color: #9cdcfe;
+}
+
+.json-content :deep(.json-string) {
+  color: #ce9178;
+}
+
+.json-content :deep(.json-number) {
+  color: #b5cea8;
+}
+
+.json-content :deep(.json-boolean) {
+  color: #569cd6;
+}
+
+.json-content :deep(.json-null) {
+  color: #569cd6;
+  font-style: italic;
+}
+
+.modern-run-btn {
+  background: radial-gradient(circle at center, #8e2de2, #4a00e0);
+  color: white !important;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 12px rgba(142, 45, 226, 0.4);
+  text-transform: none !important;
+  /* <-- stops uppercase */
+}
+
+.modern-run-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 18px rgba(142, 45, 226, 0.6);
+}
+
+.modern-run-btn:disabled {
+  background: radial-gradient(circle at center, #999, #777);
+  color: rgba(255, 255, 255, 0.6) !important;
+  box-shadow: none;
+  transform: none;
+}
+
+.file-upload {
+  color: rgba(142, 45, 226, 0.6) ! important;
 }
 </style>

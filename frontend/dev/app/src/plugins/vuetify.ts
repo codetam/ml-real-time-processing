@@ -11,6 +11,7 @@ import 'vuetify/styles'
 // Composables
 import { createVuetify } from 'vuetify'
 import { VVideo } from 'vuetify/labs/VVideo'
+import { VFileUpload } from 'vuetify/labs/VFileUpload'
 
 const myCustomLightTheme = {
   dark: false,
@@ -29,7 +30,7 @@ const myCustomLightTheme = {
     info: '#2196F3',
     success: '#4CAF50',
     warning: '#FB8C00',
-    text: '#202124'
+    text: '#F5F5F7'
   },
   variables: {
     'border-color': '#000000',
@@ -60,5 +61,6 @@ export default createVuetify({
   },
   components: {
     VVideo,
+    VFileUpload
   },
 })
