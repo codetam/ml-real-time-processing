@@ -1,9 +1,10 @@
 import logging
 import os
+import uuid
 import aioredis
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
-from app.api.routes import stream
+from app.api.routes import image, models, results
 from app.utils.formatting import handler
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -22,7 +23,9 @@ async def lifespan(app: FastAPI):
     
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(stream.router)
+app.include_router(results.router)
+app.include_router(models.router)
+app.include_router(image.router)
 
 origins = [
     "http://localhost:3000",
@@ -35,3 +38,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.post("/session")
+async def create_session():
+    session_id = str(uuid.uuid4())
+    return {"session_id": session_id}
