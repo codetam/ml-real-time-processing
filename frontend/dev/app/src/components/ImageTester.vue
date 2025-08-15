@@ -11,10 +11,8 @@
       </v-col>
     </v-row>
 
-
     <v-spacer style="height: 8rem;"></v-spacer>
 
-    <!-- Glassmorphism Upload Card -->
     <v-row justify="center" class="z-top">
       <v-col cols="12" md="10" lg="10">
         <v-card variant="text" class="pa-6" elevation="0">
@@ -50,73 +48,17 @@
           <!-- Images -->
           <v-row style="min-height: 400px;">
             <v-col cols="12" md="6">
-              <v-card class="pa-4 h-100 preview-card hover-scale">
-                <v-card-title class="info text-text">
-                  <v-icon left class="text-text">mdi-camera</v-icon>
-                  Uploaded Image
-                  <v-spacer></v-spacer>
-                </v-card-title>
-                <div v-if="imageFile" class="text-center py-6 d-flex justify-center">
-                  <img :src="previewUrl" alt="Uploaded Preview" class="responsive-img rounded-lg" />
-                </div>
-                <div v-else class="placeholder">
-                  <v-icon size="64" color="grey lighten-1">mdi-image-off</v-icon>
-                  <p class="text-subtitle-1 mt-2">
-                    Upload an image to display
-                  </p>
-                </div>
-              </v-card>
+              <GlassImage title="Uploaded Image" subtitle="Upload an image to display" :preview-url="previewUrl" />
             </v-col>
             <v-col cols="12" md="6">
-              <v-card class="pa-4 h-100 preview-card hover-scale">
-                <v-card-title class="text-text">
-                  <v-icon left class="mr-2">mdi-camera</v-icon>
-                  Proccessed Image
-                  <v-spacer></v-spacer>
-                </v-card-title>
-                <div v-if="bboxProcessedUrl" class="text-center py-6 d-flex justify-center">
-                  <img :src="bboxProcessedUrl" alt="Processed Preview" class="responsive-img rounded-lg" />
-                </div>
-                <div v-else class="placeholder">
-                  <v-icon size="64" color="grey lighten-1">mdi-image-off</v-icon>
-                  <p class="text-subtitle-1 mt-2">
-                    Click Run AI to process
-                  </p>
-                </div>
-              </v-card>
+              <GlassImage title="Proccessed Image" subtitle="Click Run AI to process" :preview-url="bboxProcessedUrl" />
             </v-col>
           </v-row>
 
           <v-divider class="my-8"></v-divider>
 
-          <!-- JSON -->
-          <v-card class="pa-4 glass-card">
-            <v-card-title class="info text-text">
-              <v-row>
-                <v-col>
-                  <v-icon class="text-text">mdi-code-json</v-icon>
-                  Response
-                </v-col>
-                <v-col class="text-right">
-                  <v-btn size="x-small" v-if="jsonData" @click="copyJsonToClipboard" icon color="black"
-                    :title="copySuccess ? 'Copied!' : 'Copy to clipboard'">
-                    <v-icon>{{ copySuccess ? 'mdi-check' : 'mdi-content-copy' }}</v-icon>
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-card-title>
-            <v-card-text class="pa-0">
-              <div v-if="jsonData">
-                <pre class="json-content pa-4"><code v-html="formattedJson"></code></pre>
-              </div>
-              <div v-else class="placeholder py-6">
-                <v-icon size="64" color="grey lighten-1">mdi-code-json</v-icon>
-                <p class="text-subtitle-1 mt-2">
-                  No JSON data yet
-                </p>
-              </div>
-            </v-card-text>
-          </v-card>
+          <JsonDataContainer :json-data="jsonData" />
+
         </v-card>
       </v-col>
     </v-row>
@@ -124,78 +66,68 @@
 </template>
 
 <script setup lang="ts">
+import { fetchJsonContent } from "@/utils/request";
+import { generateImageWithBBoxes } from "@/utils/yolo";
 import { ref } from "vue";
-
-const selectedModel = ref(null);
-const models = ["YOLO11"];
-const loading = ref(false);
-
 import { computed } from "vue";
 
-const sessionId = "test-id"
-
-// Image upload
-const maxSize = 5000000 // 5 MB
 const imageFile = ref<File | undefined>(undefined);
-const errorMessage = 'Total image size should be less than 5 MB!'
+const bboxProcessedUrl = ref<string | undefined>(undefined);
+const jsonData = ref<JSON | undefined>(undefined);
 
-// JSON data
-const jsonData = ref<any>(null)
-const copySuccess: Ref<boolean> = ref(false)
+let sessionId: string | undefined = undefined;
+let ws: WebSocket | undefined = undefined;
 
-// WebSocket connection
-const messages = ref<string[]>([]);
-const ws = new WebSocket(`ws://localhost:8000/stream/ws/${sessionId}`);
-ws.onmessage = async (event) => {
-  console.log('WebSocket message received:', event.data);
-  try {
-    const parsedData = JSON.parse(event.data);
-    jsonData.value = parsedData;
+const selectedModel = ref(null);
+const models: Ref<string[]> = ref([])
+const loading = ref(false);
 
-    if (imageFile.value) {
-      bboxProcessedUrl.value = await generateImageWithBBoxes(imageFile.value, parsedData["detections"]);
-    }
+onMounted( async () => {
+  loadModels();
+})
 
-  } catch (e) {
-    jsonData.value = {
-      message: event.data,
-      timestamp: new Date().toISOString()
-    };
-  }
-};
-
-function syntaxHighlight(json: string): string {
-  const esc = json
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-
-  return esc.replace(
-    /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(?:\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-    (match: string) => {
-      let cls = 'json-number'
-      if (/^"/.test(match)) {
-        cls = /:$/.test(match) ? 'json-key' : 'json-string'
-      } else if (/true|false/.test(match)) {
-        cls = 'json-boolean'
-      } else if (/null/.test(match)) {
-        cls = 'json-null'
-      }
-      return `<span class="${cls}">${match}</span>`
-    }
-  )
+async function loadModels() {
+  const data = await fetchJsonContent(`http://localhost:8000/models`, {
+    method: 'GET'
+  });
+  models.value = data.models;
 }
 
-const formattedJson = computed<string>(() =>
-  jsonData.value ? syntaxHighlight(JSON.stringify(jsonData.value, null, 2)) : ''
-)
+async function fetchSessionId() {
+  const data = await fetchJsonContent(`http://localhost:8000/session`, {
+    method: 'POST'
+  });
+  sessionId = data.session_id;
+}
+
+async function startWebsocketConnection() {
+  if (!sessionId) {
+    await fetchSessionId();
+  }
+
+  const ws = new WebSocket(`ws://localhost:8000/results/ws/${sessionId}`);
+  ws.onmessage = async (event) => {
+    console.log('WebSocket message received:', event.data);
+    try {
+      const parsedData = JSON.parse(event.data);
+      jsonData.value = parsedData;
+
+      if (imageFile.value) {
+        bboxProcessedUrl.value = await generateImageWithBBoxes(imageFile.value, parsedData["detections"]);
+      }
+
+    } catch (e) {
+      console.log('Error while parsing JSON message');
+    }
+  };
+}
 
 const previewUrl = computed(() =>
   imageFile.value ? URL.createObjectURL(imageFile.value) : undefined
 )
 
 watch(imageFile, () => {
-  bboxProcessedUrl.value = null;
+  bboxProcessedUrl.value = undefined;
 })
 
 async function processImage() {
@@ -204,91 +136,17 @@ async function processImage() {
     return;
   }
 
+  if (!ws) {
+    await startWebsocketConnection();
+  }
+
   const formData = new FormData();
   formData.append("image", imageFile.value);
-  try {
-    const res = await fetch(`http://localhost:8000/stream/upload-image/${sessionId}`, {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!res.ok) {
-      throw new Error('Network response not ok');
-    }
-    const data = await res.json();
-    console.log("Upload successful", data);
-  } catch (error) {
-    console.log("Failed uploading file")
-  }
-
-}
-
-async function copyJsonToClipboard() {
-  try {
-    await navigator.clipboard.writeText(formattedJson.value)
-    copySuccess.value = true
-    console.log('JSON copied to clipboard!')
-    setTimeout(() => {
-      copySuccess.value = false
-    }, 2000)
-  } catch (err) {
-    console.log('Failed to copy to clipboard')
-  }
-}
-
-interface Bbox {
-  x_min: number,
-  y_min: number,
-  x_max: number,
-  y_max: number
-}
-interface Detection {
-  label: string,
-  confidence: number,
-  bbox: Bbox
-}
-const bboxProcessedUrl = ref<string | null>(null);
-async function generateImageWithBBoxes(file: File, detections: Detection[]) {
-  return new Promise<string>((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return reject('No canvas context');
-
-      // Draw original image
-      ctx.drawImage(img, 0, 0);
-
-      detections.forEach((detection) => {
-        // Draw bounding box
-        ctx.strokeStyle = 'limegreen';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(detection.bbox.x_min,
-          detection.bbox.y_min,
-          detection.bbox.x_max - detection.bbox.x_min,
-          detection.bbox.y_max - detection.bbox.y_min);
-
-        // Draw label
-        ctx.fillStyle = 'limegreen';
-        ctx.font = '32px sans-serif';
-        const label = detection.label;
-        const textWidth = ctx.measureText(label).width;
-        ctx.fillRect(detection.bbox.x_min, detection.bbox.y_min - 36, textWidth + 10, 36);
-
-        ctx.fillStyle = 'white';
-        ctx.fillText(label, detection.bbox.x_min + 5, detection.bbox.y_min - 8);
-      });
-      // Export new image as Data URL
-      resolve(canvas.toDataURL('image/png'));
-    }
-
-    img.onerror = (err) => reject(err);
-    img.src = URL.createObjectURL(file);
+  await fetchJsonContent(`http://localhost:8000/image/test/${selectedModel.value}/${sessionId}`, {
+    method: 'POST',
+    body: formData
   });
 }
-
 </script>
 
 <style scoped>
@@ -298,13 +156,6 @@ async function generateImageWithBBoxes(file: File, detections: Detection[]) {
   overflow: hidden;
 }
 
-.glass-card {
-  background: rgba(20, 20, 30, 0.85);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(16px);
-  color: white;
-}
 .upload-image {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 16px;
@@ -318,27 +169,6 @@ async function generateImageWithBBoxes(file: File, detections: Detection[]) {
 
 .hover-scale:hover {
   transform: scale(1.02);
-}
-
-.placeholder-container {
-  display: flex;
-  justify-content: center;
-  padding: 40px;
-}
-
-.placeholder-image {
-  border-radius: 12px;
-  max-width: 100%;
-  opacity: 0.8;
-}
-
-.placeholder {
-  height: 350px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #888;
 }
 
 .responsive-img {
@@ -382,39 +212,6 @@ async function generateImageWithBBoxes(file: File, detections: Detection[]) {
 
 .preview-card:hover {
   transform: scale(1.02);
-}
-
-.json-content {
-  background: #1e1e1e;
-  color: #d4d4d4;
-  border-radius: 6px;
-  overflow-x: auto;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 0.875rem;
-  line-height: 1.6;
-  padding: 1rem;
-}
-
-/* IMPORTANT: use :deep() so scoped CSS applies to v-html content */
-.json-content :deep(.json-key) {
-  color: #9cdcfe;
-}
-
-.json-content :deep(.json-string) {
-  color: #ce9178;
-}
-
-.json-content :deep(.json-number) {
-  color: #b5cea8;
-}
-
-.json-content :deep(.json-boolean) {
-  color: #569cd6;
-}
-
-.json-content :deep(.json-null) {
-  color: #569cd6;
-  font-style: italic;
 }
 
 .modern-run-btn {
