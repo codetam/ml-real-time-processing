@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse
 import requests
 import os
 
@@ -11,7 +10,7 @@ router = APIRouter(
 )
 
 @router.get("/")
-def get_active_models() -> JSONResponse:
+def get_active_models():
     response = requests.post(f"http://{TRITON_HTTP_URL}/v2/repository/index",json={
         "ready": True
     })
@@ -20,4 +19,4 @@ def get_active_models() -> JSONResponse:
     names = []
     for model in data:
         names.append(model["name"])
-    return JSONResponse({"models": names})
+    return {"models": names}
