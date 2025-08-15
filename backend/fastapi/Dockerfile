@@ -24,9 +24,9 @@ WORKDIR /project
 # =======================
 FROM base as prod
 
-COPY app/ .
+COPY app/ /project/app
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 
 # =======================

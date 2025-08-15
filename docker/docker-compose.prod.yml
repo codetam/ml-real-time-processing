@@ -1,22 +1,20 @@
-# To be set up
 services:
   fastapi:
     build:
       target: prod
-    image: ghcr.io/your-org/fastapi:latest
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    image: codetam/ml-real-time-fastapi
     restart: always
 
   inference_worker:
     build:
       target: prod
-    image: ghcr.io/your-org/inference-worker:latest
-    command: python main.py
+    image: codetam/ml-real-time-inference
     restart: always
 
-  frontend-dev:
+  frontend:
     build:
       target: prod
-    image: ghcr.io/your-org/frontend:latest
-    command: pnpm run
+    image: codetam/ml-real-time-frontend
     restart: always
+    ports:
+      - 3000:80

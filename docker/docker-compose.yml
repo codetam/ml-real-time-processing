@@ -12,6 +12,7 @@ services:
     container_name: fastapi
     environment:
       - REDIS_URL=redis://redis:6379/0
+      - TRITON_HTTP_URL=triton:8002
     depends_on:
       - redis
     ports:
@@ -26,7 +27,6 @@ services:
       - TRITON_GRPC_URL=triton:8001
       - TRITON_HTTP_URL=triton:8002
       - NVIDIA_VISIBLE_DEVICES=0
-    command: sh -c "cd /project/app && python main.py"
     deploy:
       resources:
         reservations:
@@ -46,6 +46,8 @@ services:
       --grpc-port=8001
       --http-port=8002
       --metrics-port=8003
+      --model-control-mode=NONE
+      --log-verbose=1
     ports:
       - "8001:8001"
       - "8002:8002"
@@ -59,13 +61,11 @@ services:
           -  driver: nvidia
              count: all
              capabilities: [gpu]
-  frontend-dev:
+  frontend:
     build:
-      context: ../frontend/dev
+      context: ../frontend
       dockerfile: Dockerfile
-    container_name: frontend-dev
-    ports:
-      - 3000:3000
+    container_name: frontend
 
 volumes:
   redis-data:

@@ -13,9 +13,11 @@ services:
     volumes:
       - ../backend/inference_worker/app:/project/app
 
-  frontend-dev:
+  frontend:
     build:
       target: dev
     command: pnpm dev --host
     volumes:
-      - ../frontend/dev/app:/project/app
+      - ../frontend/app:/app
+    ports:
+      - 3000:3000
