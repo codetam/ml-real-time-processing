@@ -1,0 +1,18 @@
+services:
+  pytorch-testing:
+    build:
+      context: ../backend/pytorch-testing
+      dockerfile: Dockerfile
+    container_name: pytorch-testing
+    restart: always
+    volumes:
+      - ../backend/pytorch-testing:/app
+      - ../models:/models
+    command: tail -F anything
+    deploy:
+      resources:
+        reservations:
+          devices:
+          -  driver: nvidia
+             count: all
+             capabilities: [gpu]

@@ -1,0 +1,22 @@
+# To be set up
+services:
+  fastapi:
+    build:
+      target: prod
+    image: ghcr.io/your-org/fastapi:latest
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    restart: always
+
+  inference_worker:
+    build:
+      target: prod
+    image: ghcr.io/your-org/inference-worker:latest
+    command: python main.py
+    restart: always
+
+  frontend-dev:
+    build:
+      target: prod
+    image: ghcr.io/your-org/frontend:latest
+    command: pnpm run
+    restart: always

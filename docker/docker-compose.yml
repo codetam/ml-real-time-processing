@@ -5,26 +5,20 @@ services:
     ports:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "no"]
-
   fastapi:
     build:
-      context: ./fastapi
+      context: ../backend/fastapi
       dockerfile: Dockerfile
     container_name: fastapi
-    # command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    command: tail -F anything 
-    volumes:
-      - ./fastapi:/project/app
-    ports:
-      - "8000:8000"
     environment:
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - redis
-#
+    ports:
+      - "8000:8000"
   inference_worker:
     build:
-      context: ./inference_worker
+      context: ../backend/inference_worker
       dockerfile: Dockerfile
     container_name: inference_worker
     environment:
@@ -32,8 +26,6 @@ services:
       - TRITON_GRPC_URL=triton:8001
       - TRITON_HTTP_URL=triton:8002
       - NVIDIA_VISIBLE_DEVICES=0
-    volumes:
-      - ./inference_worker:/project/app
     command: sh -c "cd /project/app && python main.py"
     deploy:
       resources:
@@ -45,7 +37,6 @@ services:
     depends_on:
       - redis
       - triton
-
   triton:
     image: nvcr.io/nvidia/tritonserver:25.07-py3
     container_name: triton
@@ -60,7 +51,7 @@ services:
       - "8002:8002"
       - "8003:8003"
     volumes:
-      - ./models:/models
+      - ../models:/models
     deploy:
       resources:
         reservations:
@@ -68,35 +59,13 @@ services:
           -  driver: nvidia
              count: all
              capabilities: [gpu]
-
-#  pytorch-testing:
-#    build:
-#      context: ./pytorch-testing
-#      dockerfile: Dockerfile
-#    container_name: pytorch-testing
-#    restart: always
-#    volumes:
-#      - ./pytorch-testing:/app
-#      - ./models:/models
-#    command: tail -F anything
-#    deploy:
-#      resources:
-#        reservations:
-#          devices:
-#          -  driver: nvidia
-#             count: all
-#             capabilities: [gpu]
-
   frontend-dev:
     build:
-      context: ./frontend/dev
+      context: ../frontend/dev
       dockerfile: Dockerfile
     container_name: frontend-dev
-    command: tail -F anything
     ports:
       - 3000:3000
-    volumes:
-      - ./frontend/dev:/project
 
 volumes:
   redis-data:

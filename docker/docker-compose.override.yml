@@ -1,0 +1,21 @@
+services:
+  fastapi:
+    build:
+      target: dev
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ../backend/fastapi/app:/project/app
+
+  inference_worker:
+    build:
+      target: dev
+    command: python main.py
+    volumes:
+      - ../backend/inference_worker/app:/project/app
+
+  frontend-dev:
+    build:
+      target: dev
+    command: pnpm dev --host
+    volumes:
+      - ../frontend/dev/app:/project/app

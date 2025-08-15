@@ -45,7 +45,9 @@ def run_inference(image: cv2.typing.MatLike, model_name: str, client: httpclient
     output_data = results.as_numpy(output_layer)
     results = output_data[0]
     results = results.transpose()
-    results = functions.filter_Detections(results)
-    rescaled_results, confidences = functions.rescale_back(results, img_w, img_h)
-
-    return rescaled_results, confidences
+    detections = functions.filter_Detections(results)
+    if len(detections) > 0:
+        rescaled_results, confidences = functions.rescale_back(detections, img_w, img_h)
+        return rescaled_results, confidences
+    else:
+        return ([], [])
