@@ -10,13 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: docker compose -f docker-compose.yml -f docker-compose.test.yml build
+      - run: docker compose -f docker-compose.yml -f docker-compose.test.yml build fastapi inference_worker frontend
         working-directory: ./docker
 
       - run: docker compose -f docker-compose.yml -f docker-compose.test.yml down -v --remove-orphans
         working-directory: ./docker
 
-      - run: docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
+      - run: docker compose -f docker-compose.yml -f docker-compose.test.yml up -d fastapi inference_worker frontend
         working-directory: ./docker
 
       - name: Fastapi is up
