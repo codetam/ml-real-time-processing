@@ -23,7 +23,7 @@ jobs:
         run: curl http://localhost:8000/health
         
       - name: Inference worker is up
-        run: docker exec -it inference_worker python healthcheck.py
+        run: docker exec -i inference_worker python healthcheck.py
 
       - name: Frontend is up
         run: curl http://localhost:3000/
