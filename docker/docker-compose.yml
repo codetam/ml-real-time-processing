@@ -40,13 +40,6 @@ services:
       - TRITON_GRPC_URL=triton:8001
       - TRITON_HTTP_URL=triton:8002
       - NVIDIA_VISIBLE_DEVICES=0
-    deploy:
-      resources:
-        reservations:
-          devices:
-          -  driver: nvidia
-             count: all
-             capabilities: [gpu]
 
   triton:
     image: nvcr.io/nvidia/tritonserver:25.07-py3

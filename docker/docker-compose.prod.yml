@@ -16,6 +16,13 @@ services:
       triton:
         condition: service_healthy
         restart: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+          -  driver: nvidia
+             count: all
+             capabilities: [gpu]
 
   frontend:
     build:
