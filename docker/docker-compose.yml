@@ -5,11 +5,18 @@ services:
     ports:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "no"]
+
   fastapi:
     build:
       context: ../backend/fastapi
       dockerfile: Dockerfile
     container_name: fastapi
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     environment:
       - REDIS_URL=redis://redis:6379/0
       - TRITON_HTTP_URL=triton:8002
@@ -17,11 +24,17 @@ services:
       - redis
     ports:
       - "8000:8000"
+
   inference_worker:
     build:
       context: ../backend/inference_worker
       dockerfile: Dockerfile
     container_name: inference_worker
+    healthcheck:
+      test: ["CMD", "python", "healthcheck.py"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     environment:
       - REDIS_URL=redis://redis:6379/0
       - TRITON_GRPC_URL=triton:8001
@@ -34,12 +47,16 @@ services:
           -  driver: nvidia
              count: all
              capabilities: [gpu]
-    depends_on:
-      - redis
-      - triton
+
   triton:
     image: nvcr.io/nvidia/tritonserver:25.07-py3
     container_name: triton
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/v2/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     command: >
       tritonserver
       --model-repository=/models
@@ -66,6 +83,12 @@ services:
       context: ../frontend
       dockerfile: Dockerfile
     container_name: frontend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
 volumes:
   redis-data:

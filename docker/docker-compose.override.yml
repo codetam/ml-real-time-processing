@@ -12,6 +12,12 @@ services:
     command: python main.py
     volumes:
       - ../backend/inference_worker/app:/project/app
+    depends_on:
+      redis:
+        condition: service_started
+      triton:
+        condition: service_healthy
+        restart: true
 
   frontend:
     build:
