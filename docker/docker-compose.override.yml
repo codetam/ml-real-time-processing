@@ -2,14 +2,12 @@ services:
   fastapi:
     build:
       target: dev
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ../backend/fastapi/app:/project/app
 
   inference_worker:
     build:
       target: dev
-    command: python main.py
     volumes:
       - ../backend/inference_worker/app:/project/app
     depends_on:
@@ -29,8 +27,13 @@ services:
   frontend:
     build:
       target: dev
-    command: pnpm dev --host
     volumes:
       - ../frontend/app:/app
     ports:
       - 3000:3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s

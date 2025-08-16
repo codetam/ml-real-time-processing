@@ -13,6 +13,7 @@ services:
     depends_on:
       redis:
         condition: service_started
+    command: sleep infinity
 
   frontend:
     build:
@@ -21,3 +22,9 @@ services:
     restart: always
     ports:
       - 3000:80
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s

@@ -1,4 +1,4 @@
-import asyncio, aioredis, os, sys
+import asyncio, aioredis, sys
 import constants
 
 async def check():

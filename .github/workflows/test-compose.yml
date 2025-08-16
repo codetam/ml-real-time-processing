@@ -26,7 +26,7 @@ jobs:
         run: docker exec -it inference_worker python healthcheck.py
 
       - name: Frontend is up
-        run: curl http://localhost:3000/
+        run: curl http://localhost:80/
 
       - run: docker compose down -v --remove-orphans
         working-directory: ./docker
