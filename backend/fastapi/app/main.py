@@ -6,7 +6,7 @@ import aioredis
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
 from fastapi.testclient import TestClient
-from app.api.routes import image, models, results
+from app.api.routes import image, models, results, stream
 from app.utils.formatting import handler
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -29,6 +29,7 @@ start_time = datetime.now()
 app.include_router(results.router)
 app.include_router(models.router)
 app.include_router(image.router)
+app.include_router(stream.router)
 
 origins = [
     "http://localhost:3000",

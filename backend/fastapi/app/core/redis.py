@@ -6,12 +6,30 @@ from typing import AsyncGenerator
 
 import aioredis
 
+from app.models.webrtc import Offer
+
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 def __generate_frame_id(session_id: str, frame_number: int):
     ts = int(time.time() * 1000)
     return f"{session_id}-{ts}-{frame_number}"
 
+async def send_webrtc_offer(redis_client: aioredis.Redis, offer: Offer) -> None:
+    await redis_client.xadd("signaling:offers", {
+        "session_id": offer.session_id,
+        "sdp": offer.sdp,
+        "type": offer.type
+    })
+    
+async def read_webrtc_answer(redis_client: aioredis.Redis, session_id: str) -> dict:
+    key = f"signaling:answers:{session_id}"
+    result = await redis_client.blpop(key, timeout=10)
+    if not result:
+        raise Exception("Timeout waiting for rtc-receiver")
+    _, raw = result
+    answer = json.loads(raw)
+    return answer
+    
 async def send_image_to_redis(redis_client: aioredis.Redis, model_name: str, data: bytes, session_id: str, frame_number: int):
     await redis_client.xadd("frames", {
         "session_id": session_id,

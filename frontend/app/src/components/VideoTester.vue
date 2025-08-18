@@ -1,104 +1,116 @@
 <template>
   <v-container class="py-8">
-    <v-card elevation="3" class="pa-6 rounded-xl">
-      <v-row align="center" class="mb-6">
-        <v-col>
-          <h1 class="text-h4 font-weight-bold text-primary">🎥 Video Model Tester</h1>
-          <p class="text-subtitle-1 text-grey-darken-1">
-            Stream or upload a video, choose your AI model, and watch live detections.
-          </p>
-        </v-col>
-      </v-row>
-
-      <v-row>
-        <v-col cols="12" md="4">
-          <v-file-input
-            v-model="videoFile"
-            label="Upload Video"
-            prepend-icon="mdi-video"
-            accept="video/*"
-            variant="outlined"
-            density="comfortable"
-          />
-        </v-col>
-
-        <v-col cols="12" md="4">
-          <v-select
-            v-model="selectedModel"
-            :items="models"
-            label="Select Model"
-            prepend-icon="mdi-robot"
-            variant="outlined"
-            density="comfortable"
-          />
-        </v-col>
-
-        <v-col cols="12" md="2">
-          <v-text-field
-            v-model="frequency"
-            label="Update Frequency (s)"
-            type="number"
-            min="0.1"
-            step="0.1"
-            prepend-icon="mdi-timer"
-            variant="outlined"
-            density="comfortable"
-          />
-        </v-col>
-
-        <v-col cols="12" md="2" class="d-flex align-center">
-          <v-btn
-            color="primary"
-            class="w-100"
-            size="large"
-            @click="startVideoProcessing"
-            :disabled="!videoFile || !selectedModel"
-          >
-            Start
-          </v-btn>
-        </v-col>
-      </v-row>
-
-      <v-divider class="my-6"></v-divider>
-
-      <v-row v-if="results">
-        <v-col cols="12" md="6">
-          <v-card class="pa-4" outlined>
-            <h3 class="text-h6 font-weight-bold">📜 JSON Results</h3>
-            <pre class="mt-3 bg-grey-lighten-3 pa-3 rounded">{{ results }}</pre>
-          </v-card>
-        </v-col>
-
-        <v-col cols="12" md="6">
-          <v-card class="pa-4" outlined>
-            <h3 class="text-h6 font-weight-bold">📹 Processed Video</h3>
-            <div
-              class="mt-3 d-flex align-center justify-center bg-grey-lighten-3 rounded"
-              style="height:300px;"
-            >
-              Bounding box overlay placeholder
-            </div>
-          </v-card>
-        </v-col>
-      </v-row>
-    </v-card>
+    <v-btn class="modern-run-btn w-100" size="large" @click="start">
+      Start Connection
+    </v-btn>
+    <v-btn class="modern-run-btn w-100" size="large" @click="sendMsg">
+      Send Message
+    </v-btn>
+    <v-btn class="modern-run-btn w-100" size="large" @click="stop">
+      Stop Connection
+    </v-btn>
   </v-container>
 </template>
 
 <script setup>
-import { ref } from "vue";
 
-const videoFile = ref(null);
-const selectedModel = ref(null);
-const frequency = ref(1);
-const models = ["YOLOv11", "YOLOv8", "Custom Model"];
-const results = ref(null);
+let pc = null
+let dataChannel = null
 
-function startVideoProcessing() {
-  results.value = JSON.stringify(
-    { detections: [{ frame: 1, label: "person", confidence: 0.88 }] },
-    null,
-    2
-  );
+async function stop() {
+  await pc.close()
+}
+async function sendMsg() {
+  dataChannel.send("Just sent a message!");
+}
+
+
+async function start() {
+  const iceConfiguration = {
+    iceServers = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun.l.google.com:5349" },
+      { urls: "stun:stun1.l.google.com:3478" },
+      { urls: "stun:stun1.l.google.com:5349" },
+      { urls: "stun:stun2.l.google.com:19302" },
+      { urls: "stun:stun2.l.google.com:5349" },
+      { urls: "stun:stun3.l.google.com:3478" },
+      { urls: "stun:stun3.l.google.com:5349" },
+      { urls: "stun:stun4.l.google.com:19302" },
+      { urls: "stun:stun4.l.google.com:5349" }
+  ];
+
+  pc = new RTCPeerConnection(iceConfiguration);
+
+  pc.onconnectionstatechange = () => console.log("pc state: " + pc.connectionState);
+
+  dataChannel = pc.createDataChannel('chat', {
+    ordered: true
+  });
+
+  dataChannel.onopen = () => {
+    console.log('Data channel opened');
+
+    // Send test data after 1 second
+    setTimeout(() => {
+      const testData = 'Hello from JavaScript!';
+      dataChannel.send(testData);
+      console.log(`Sent: ${testData}`);
+    }, 1000);
+  };
+  dataChannel.onmessage = (event) => {
+    console.log(`Received: ${event.data}`);
+  };
+
+  dataChannel.onclose = () => {
+    console.log('Data channel closed');
+  };
+
+  let offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  console.log(offer.sdp)
+
+  await new Promise((resolve) => {
+    if (pc.iceGatheringState === 'complete') {
+      resolve();
+    } else {
+      pc.addEventListener('icegatheringstatechange', () => {
+        if (pc.iceGatheringState === 'complete') {
+          resolve();
+        }
+      });
+    }
+  });
+
+  offer = pc.localDescription;
+  console.log(offer.sdp)
+  const sessionId = Math.random().toString(36).slice(2); // random session id
+
+  const resp = await fetch("http://localhost:8000/stream/webrtc/offer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sdp: offer.sdp,
+      type: offer.type,
+      session_id: sessionId
+    })
+  });
+
+  if (!resp.ok) {
+    console.log("Failed to get answer: " + resp.status);
+    return;
+  }
+
+  console.log(offer.sdp)
+  const answer = await resp.json();
+  console.log("Got answer from server");
+
+
+  console.log(`OWN:`)
+  console.log(JSON.stringify(offer))
+  console.log(`SERVER:`)
+  console.log(JSON.stringify(answer))
+  
+  pc.setRemoteDescription(answer);
 }
 </script>
