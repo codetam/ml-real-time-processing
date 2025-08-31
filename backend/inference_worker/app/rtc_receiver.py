@@ -55,7 +55,7 @@ async def create_webrtc_answer(params):
 
     @pc.on("connectionstatechange")
     async def on_connectionstatechange():
-        print("Connection state is %s", pc.connectionState)
+        print("Connection state: ", pc.connectionState)
         if pc.connectionState == "failed":
             await pc.close()
             pcs.discard(pc)

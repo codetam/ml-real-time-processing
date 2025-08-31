@@ -79,5 +79,22 @@ services:
       dockerfile: Dockerfile
     container_name: frontend
 
+  turn_server_webrtc:
+    image: coturn/coturn:4.7
+    container_name: turn_server_webrtc
+    restart: unless-stopped
+    ports:
+      - "3478:3478"         # TURN TCP
+      - "3478:3478/udp"     # TURN UDP
+      - "5349:5349"         # TLS TCP
+      - "5349:5349/udp"     # TLS UDP
+      - "49160-49179:49160-49179/udp" # Relay port range (20 ports)
+    environment:
+      - STATIC_AUTH_SECRET=my_static_secret
+    command:
+      - "--min-port=49160"
+      - "--max-port=49179"
+      - "--simple-log"
+
 volumes:
   redis-data:

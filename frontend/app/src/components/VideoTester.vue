@@ -21,29 +21,28 @@ async function stop() {
   await pc.close()
 }
 async function sendMsg() {
-  dataChannel.send("Just sent a message!");
+  dataChannel.send("ping - testing");
 }
 
 
 async function start() {
+  console.log("Starting WebRTC connection...")
+
   const iceConfiguration = {
     iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun.l.google.com:5349" },
-        { urls: "stun:stun1.l.google.com:3478" },
-        { urls: "stun:stun1.l.google.com:5349" },
-        { urls: "stun:stun2.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:5349" },
-        { urls: "stun:stun3.l.google.com:3478" },
-        { urls: "stun:stun3.l.google.com:5349" },
-        { urls: "stun:stun4.l.google.com:19302" },
-        { urls: "stun:stun4.l.google.com:5349" }
-    ]
+      {
+        urls: ["stun:turn.codetam.com:3478"]
+      },
+      {
+        urls: ["turn:turn.codetam.com:3478"],
+        username: "user",
+        credential: "my_static_secret"
+      }]
   }
 
   pc = new RTCPeerConnection(iceConfiguration);
 
-  pc.onconnectionstatechange = () => console.log("pc state: " + pc.connectionState);
+  pc.onconnectionstatechange = () => console.log("Pc connection state: " + pc.connectionState);
 
   dataChannel = pc.createDataChannel('chat', {
     ordered: true
@@ -52,13 +51,13 @@ async function start() {
   dataChannel.onopen = () => {
     console.log('Data channel opened');
 
-    // Send test data after 1 second
     setTimeout(() => {
-      const testData = 'Hello from JavaScript!';
+      const testData = 'Handshake start';
       dataChannel.send(testData);
       console.log(`Sent: ${testData}`);
     }, 1000);
   };
+
   dataChannel.onmessage = (event) => {
     console.log(`Received: ${event.data}`);
   };
@@ -69,7 +68,6 @@ async function start() {
 
   let offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
-  console.log(offer.sdp)
 
   await new Promise((resolve) => {
     if (pc.iceGatheringState === 'complete') {
@@ -84,7 +82,6 @@ async function start() {
   });
 
   offer = pc.localDescription;
-  console.log(offer.sdp)
   const sessionId = Math.random().toString(36).slice(2); // random session id
 
   const resp = await fetch("http://localhost:8000/stream/webrtc/offer", {
@@ -96,22 +93,17 @@ async function start() {
       session_id: sessionId
     })
   });
+  console.log("Sent offer: " + JSON.stringify(offer))
 
   if (!resp.ok) {
     console.log("Failed to get answer: " + resp.status);
     return;
   }
 
-  console.log(offer.sdp)
   const answer = await resp.json();
   console.log("Got answer from server");
+  console.log("Server responded: " + JSON.stringify(answer))
 
-
-  console.log(`OWN:`)
-  console.log(JSON.stringify(offer))
-  console.log(`SERVER:`)
-  console.log(JSON.stringify(answer))
-  
   pc.setRemoteDescription(answer);
 }
 </script>
