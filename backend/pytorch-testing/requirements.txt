@@ -1,6 +1,5 @@
 transformers==4.40.2
 efficientnet-pytorch==0.7.1
-ultralytics==8.2.15
 debugpy===1.8.7
 matplotlib >= 3.3.4
 numpy <2
