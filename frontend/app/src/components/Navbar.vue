@@ -1,103 +1,142 @@
 <template>
   <v-app>
-    <div class="bg-overlay"></div>
-    <!-- Navbar with Tabs -->
-    <v-app-bar app flat height="72" class="navbar-glass" elevation="1" color="rgba(0, 0, 0, 0.05)">
-      <v-container class="d-flex align-center">
-        <!-- Logo / Title -->
-        <v-app-bar-title class="font-weight-bold text-h5 text-text">
-          🚀 AI Vision Studio
-        </v-app-bar-title>
+    <div class="app-shell">
 
-        <!-- Tabs -->
-        <v-tabs
-          v-model="activeTab"
-          slider-color="primary"
-          bg-color="transparent"
-          class="text-text"
-        >
-          <v-tab v-for="tab in tabs" :key="tab">
-            {{ tab }}
-          </v-tab>
-        </v-tabs>
-      </v-container>
-    </v-app-bar>
+      <!-- ── Top navigation ───────────────────────────────────────── -->
+      <header class="topnav">
+        <div class="topnav-inner">
+          <span class="logo">codetam<span class="logo-accent">/vision</span></span>
+          <nav class="tabnav">
+            <button
+              v-for="(tab, i) in tabs"
+              :key="tab"
+              class="tabnav-item"
+              :class="{ 'tabnav-item--active': activeTab === i }"
+              @click="activeTab = i"
+            >
+              {{ tab }}
+            </button>
+          </nav>
+        </div>
+      </header>
 
-    <!-- Page Content -->
-    <v-main>
-      <v-container fluid>
+      <!-- ── Page content ─────────────────────────────────────────── -->
+      <main class="page-content">
         <component :is="currentComponent" />
-      </v-container>
-    </v-main>
+      </main>
 
-    <!-- Footer -->
-    <v-footer app class="navbar-glass text-black text-center">
-      <v-col cols="12">
-        © 2025 AI Vision Studio – Built with ❤️
-      </v-col>
-    </v-footer>
+    </div>
   </v-app>
 </template>
 
-<script setup>
-import { ref, computed } from "vue";
-import ImageTester from './ImageTester.vue';
-import VideoTester from './VideoTester.vue';
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import ImageTester from './ImageTester.vue'
+import VideoTester from './VideoTester.vue'
 
-
-const tabs = ["Image Tester", "Video Tester"];
-const activeTab = ref(0);
-
-const currentComponent = computed(() => {
-  return activeTab.value === 0 ? ImageTester : VideoTester;
-});
+const tabs = ['Image Tester', 'Video Tester']
+const activeTab = ref(0)
+const currentComponent = computed(() => activeTab.value === 0 ? ImageTester : VideoTester)
 </script>
 
-<style scoped>
-/* Gradient background */
+<style>
+/* ── Global reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
 .v-application {
-  background: linear-gradient(145deg, #b3e5fc, #b39ddb);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  background: #0a0b0d !important;
+  color: #ffffff !important;
 }
-/*
-.bg-overlay {
-  background: linear-gradient(-45deg, #0f0f1a, #1a1a40, #0a0a1f, #1a0033);
-  background-size: 400% 400%;
-  animation: gradientBG 12s ease infinite;
-  position: absolute;
+
+/* Make Vuetify v-select look right in our dark context */
+.v-field__outline { --v-field-border-opacity: 1 !important; }
+</style>
+
+<style scoped>
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #0a0b0d;
+}
+
+/* ── Top nav ──────────────────────────────────────────────────── */
+.topnav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #0a0b0d;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  height: 56px;
+  display: flex;
+  align-items: center;
+}
+
+.topnav-inner {
   width: 100%;
-  height: 100%;
-  z-index: 0;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
 }
-@keyframes gradientBG {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+
+.logo {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
-*/
+.logo-accent {
+  color: #0052ff;
+  font-weight: 400;
+}
 
+.tabnav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
-.bg-overlay {
+.tabnav-item {
+  height: 56px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #8a919e;
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s;
+  font-family: inherit;
+}
+
+.tabnav-item:hover { color: #c8d0db; }
+
+.tabnav-item--active { color: #ffffff; }
+
+.tabnav-item--active::after {
+  content: '';
   position: absolute;
-  top: -20px;
-  left: -20px;
-  width: calc(100% + 40px);
-  height: calc(100% + 40px);
-  background-image: url('/src/assets/background.jpg');
-  background-size: cover;
-  background-repeat: no-repeat;
-  animation: moveBG 60s linear infinite;
-  filter: blur(12px);
-  z-index: 0;
+  bottom: 0;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: #0052ff;
+  border-radius: 2px 2px 0 0;
 }
 
-@keyframes moveBG {
-  0%   { background-position: 0% 0%; }
-  20%  { background-position: 15% 25%; }
-  40%  { background-position: 30% 10%; }
-  60%  { background-position: 45% 30%; }
-  80%  { background-position: 25% 45%; }
-  100% { background-position: 0% 0%; }
+/* ── Page ─────────────────────────────────────────────────────── */
+.page-content {
+  flex: 1;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 32px 24px;
 }
-
-
 </style>

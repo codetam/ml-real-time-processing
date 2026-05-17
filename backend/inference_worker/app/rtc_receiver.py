@@ -108,7 +108,7 @@ async def process_video_track(track, channel_holder: dict, model_name: str, clie
             inference_count += 1
             log.info("Inference #%d done in %.1f ms — %d detection(s)", inference_count, elapsed_ms, len(detections))
 
-            channel.send(json.dumps({"detections": detections}))
+            channel.send(json.dumps({"detections": detections, "inference_ms": round(elapsed_ms, 1)}))
 
         except asyncio.CancelledError:
             log.info("Video processing task cancelled")
