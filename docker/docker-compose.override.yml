@@ -24,6 +24,25 @@ services:
              count: all
              capabilities: [gpu]
 
+  rtc_worker:
+    build:
+      target: dev
+    volumes:
+      - ../backend/inference_worker/app:/project/app
+    depends_on:
+      redis:
+        condition: service_started
+      triton:
+        condition: service_healthy
+        restart: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+          -  driver: nvidia
+             count: all
+             capabilities: [gpu]
+
   frontend:
     build:
       target: dev

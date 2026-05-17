@@ -43,6 +43,24 @@ services:
     ports:
       - "8080:8080"
 
+  
+  rtc_worker:
+    build:
+      context: ../backend/inference_worker
+      dockerfile: Dockerfile
+    container_name: rtc_worker
+    healthcheck:
+      test: ["CMD", "python", "healthcheck.py"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - TRITON_GRPC_URL=triton:8001
+      - TRITON_HTTP_URL=triton:8002
+      - NVIDIA_VISIBLE_DEVICES=0
+    command: python rtc_receiver.py
+
   triton:
     image: nvcr.io/nvidia/tritonserver:25.07-py3
     container_name: triton

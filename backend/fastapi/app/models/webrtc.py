@@ -5,3 +5,4 @@ class Offer(BaseModel):
     sdp: str
     type: str
     session_id: str
+    model_name: str = "yolo11"

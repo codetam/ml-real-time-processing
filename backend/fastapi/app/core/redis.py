@@ -18,7 +18,8 @@ async def send_webrtc_offer(redis_client: aioredis.Redis, offer: Offer) -> None:
     await redis_client.xadd("signaling:offers", {
         "session_id": offer.session_id,
         "sdp": offer.sdp,
-        "type": offer.type
+        "type": offer.type,
+        "model_name": offer.model_name
     })
     
 async def read_webrtc_answer(redis_client: aioredis.Redis, session_id: str) -> dict:
