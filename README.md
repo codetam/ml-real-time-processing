@@ -1,4 +1,4 @@
-# codetam/vision
+# ML Real-Time Processing
 
 A production-grade, fully containerized platform for real-time computer vision inference. Upload a static image or stream live webcam video and get object detection results powered by NVIDIA Triton Inference Server, rendered directly in the browser with sub-100ms latency on a local GPU.
 
