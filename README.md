@@ -158,9 +158,3 @@ Key environment variables (set in `docker-compose.yml` or an `.env` file):
 │   └── app/              # Vue 3 + Vuetify SPA
 └── models/               # Triton model repository (not committed)
 ```
-
----
-
-## License
-
-MIT
